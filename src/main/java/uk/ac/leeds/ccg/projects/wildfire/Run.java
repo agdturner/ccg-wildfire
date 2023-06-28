@@ -21,20 +21,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalField;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
@@ -82,17 +77,26 @@ public class Run {
                 // Iterate through each rows one by one.
                 int rn = 0;
                 for (Row row : sheet) {
-                    System.out.println(rn + " out of " + sheet.getLastRowNum());
+                    //System.out.println(rn + " out of " + sheet.getLastRowNum());
                     if (rn < 11298) {
-                        // Add two columns
-                        int d1c = row.getLastCellNum();
+                        // Add three columns
+                        int dowc = row.getLastCellNum(); // Day of week
+                        row.createCell(dowc);
+                        int moyc = row.getLastCellNum(); // Month of year
+                        row.createCell(moyc);
+                        int yc = row.getLastCellNum(); // Year
+                        row.createCell(yc);
+                        int d1c = row.getLastCellNum();  // Time difference start to stop
                         row.createCell(d1c);
-                        int d2c = row.getLastCellNum();
+                        int d2c = row.getLastCellNum();  // Time difference stop to close
                         row.createCell(d2c);
                         // For each row, iterate through all the columns.
                         Iterator<Cell> cellIterator = row.cellIterator();
                         // Print everything to stdout.
                         if (rn == 0) {
+                            row.getCell(dowc).setCellValue("Day of week fire start");
+                            row.getCell(moyc).setCellValue("Month of year fire start");
+                            row.getCell(yc).setCellValue("Year fire start");
                             row.getCell(d1c).setCellValue("Seconds from call to stop");
                             row.getCell(d2c).setCellValue("Seconds from stop to close");
                             while (cellIterator.hasNext()) {
@@ -108,10 +112,16 @@ public class Run {
                         } else {
                             long diff1 = 0;
                             long diff2 = 0;
+                            String dow = "";
+                            String moy = "";
+                            int year = 0;
                             Cell c8 = row.getCell(8);
                             if (c8 != null) {
                                 Date d0 = c8.getDateCellValue();
                                 ZonedDateTime zdt0 = getZonedDateTime(d0);
+                                dow = zdt0.getDayOfWeek().toString();
+                                moy = zdt0.getMonth().toString();
+                                year = zdt0.getYear();
                                 Cell c14 = row.getCell(14);
                                 if (c14 != null) {
                                     Date d1 = c14.getDateCellValue();
@@ -124,9 +134,18 @@ public class Run {
                                         ZonedDateTime zdt2 = getZonedDateTime(d2);
                                         diff2 = ChronoUnit.SECONDS.between(zdt1, zdt2);
                                         //System.out.println(zdt2.toString() + " " + diff2);
+                                    } else {
+                                        diff2 = -1;
                                     }
+                                } else {
+                                    diff1 = -1;
                                 }
+                            } else {
+                                System.out.println("No fire start date!");
                             }
+                            row.getCell(dowc).setCellValue(dow);
+                            row.getCell(moyc).setCellValue(moy);
+                            row.getCell(yc).setCellValue(year);
                             row.getCell(d1c).setCellValue(diff1);
                             row.getCell(d2c).setCellValue(diff2);
 //                        String cellValueStr = df.formatCellValue();
@@ -160,7 +179,7 @@ public class Run {
                 FileOutputStream out = new FileOutputStream(pOut.toFile());
                 workbook.write(out);
                 out.close();
-                System.out.println("howtodoinjava_demo.xlsx written successfully on disk.");
+                System.out.println("xlsx written successfully on disk.");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -170,9 +189,13 @@ public class Run {
 
     }
 
+    /**
+     * Compile Date as a ZonedDateTime.
+     * 
+     * @param d The date to be turned into a ZonedDateTime
+     * @return ZonedDateTime
+     */
     public static ZonedDateTime getZonedDateTime(Date d) {
-        //Instant i = d.toInstant();
-        //i.
         String s = d.toString();
         //System.out.print(s);
         String[] split = s.split(" ");
