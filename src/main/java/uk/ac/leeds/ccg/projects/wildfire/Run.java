@@ -30,18 +30,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import uk.ac.leeds.ccg.generic.core.Generic_Environment;
-import uk.ac.leeds.ccg.generic.io.Generic_Defaults;
 import uk.ac.leeds.ccg.generic.util.Generic_Time;
 
 /**
- * The main file to run.
+ * The main file to run for the initial analysis Stuart wanted which explored 
+ * the duration of fires. This worked with data in Microsoft XLSX format using 
+ * Apache POI. Essentially, this processed input data and created 3 additional 
+ * output columns
  *
  * @author Andy Turner
  */
@@ -51,7 +49,10 @@ public class Run {
     }
 
     public static void main(String[] args) {
-
+        new Run().run();
+    }
+    
+    public void run() {
         Path pData = Paths.get("C:", "Users", "agdtu", "work", "research", "Wildfire", "data");
         //Path pIn = Paths.get(pData.toString(), "input", "WRS_Export_All_20230306_Excel", "GENERIC_1", "WRS_Export__.xlsx");
         Path pIn = Paths.get(pData.toString(), "input", "WYFRS Potential Wildfire IRS data.xlsx");
@@ -62,15 +63,15 @@ public class Run {
             Logger.getLogger(Run.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        DataFormatter df = new DataFormatter();
+        //DataFormatter df = new DataFormatter();
 
         try {
-            Generic_Environment ge = new Generic_Environment(new Generic_Defaults(pData));
+            //Generic_Environment ge = new Generic_Environment(new Generic_Defaults(pData));
             XSSFWorkbook workbook;
             try (FileInputStream file = new FileInputStream(pIn.toFile())) {
                 // Create Workbook instance holding reference to .xlsx file.
                 workbook = new XSSFWorkbook(file);
-                FormulaEvaluator fe = new XSSFFormulaEvaluator(workbook);
+                //FormulaEvaluator fe = new XSSFFormulaEvaluator(workbook);
                 // Get first/desired sheet from the workbook.
                 XSSFSheet sheet = workbook.getSheetAt(0);
 
@@ -174,16 +175,12 @@ public class Run {
                     rn++;
                 }
             }
-            try {
-                //Write the workbook in file system
-                FileOutputStream out = new FileOutputStream(pOut.toFile());
+            try ( //Write the workbook in file system
+                    FileOutputStream out = new FileOutputStream(pOut.toFile())) {
                 workbook.write(out);
-                out.close();
-                System.out.println("xlsx written successfully on disk.");
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        } catch (Exception e) {
+            System.out.println("xlsx written successfully on disk.");
+        } catch (IOException e) {
             e.printStackTrace(System.err);
         }
 
