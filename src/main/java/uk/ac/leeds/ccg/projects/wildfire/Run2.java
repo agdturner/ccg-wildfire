@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,6 +51,16 @@ public class Run2 {
     HashMap<Integer, String> records;
     String header;
 
+    // Identifies those records that meet a criteria.
+    HashSet<Integer> a;
+
+    // Identifies those records that meet b criteria.
+    HashSet<Integer> b;
+
+    // Identifies those records that meet c criteria.
+    HashSet<Integer> c;
+
+    // A class of area for which selections are made.
     String area = "\"Over 10,000";
 
     // a
@@ -80,7 +93,19 @@ public class Run2 {
     String s_3_7 = "3.7 ";
     HashSet<String> vs_6_1;
     String s_6_1 = "6.1 ";
+
+    // c
+    String s_2_1 = "2.1 ";
+    String s_2_5 = "2.5 ";
+    String s_2_6 = "2.6 ";
+    HashMap<Integer, Long> callsToStops;
+    HashMap<Integer, Long> stopsToCloses;
+    HashMap<Integer, Long> callsToCloses;
+    HashMap<Integer, String> dates;
+    HashMap<Integer, String> times;
+
     int count_resourceCommittedGreaterThan3 = 0;
+    int count_durationGreaterThan6Hours = 0;
 
     public Run2() {
     }
@@ -95,7 +120,7 @@ public class Run2 {
             Path pData = Paths.get("C:", "Users", "geoagdt", "work", "research", "Wildfire", "data");
             Path pIn = Paths.get(pData.toString(), "input", "Richard Hawley 2.csv");
             Path pIn2 = Paths.get(pData.toString(), "input", "Richard Hawley 3.csv");
-            Path pOut = Paths.get(pData.toString(), "output", "ab.csv");
+            Path pOut = Paths.get(pData.toString(), "output", "abc.csv");
 
             //DataFormatter df = new DataFormatter();
             Generic_Environment ge = new Generic_Environment(new Generic_Defaults(pData));
@@ -124,6 +149,9 @@ public class Run2 {
         fieldValues = new HashMap<>();
         records = new HashMap<>();
         sFields = new ArrayList<>();
+
+        // a
+        a = new HashSet<>();
         // 5_16
         sFields.add(s_5_16);
         vs_5_16 = new HashSet<>();
@@ -148,6 +176,9 @@ public class Run2 {
         sFields.add(s_8_35a);
         vs_8_35a = new HashSet<>();
         fieldValues.put(s_8_35a, vs_8_35a);
+
+        // b
+        b = new HashSet<>();
         // 3_7
         sFields.add(s_3_7);
         vs_3_7 = new HashSet<>();
@@ -156,6 +187,14 @@ public class Run2 {
         sFields.add(s_6_1);
         vs_6_1 = new HashSet<>();
         fieldValues.put(s_6_1, vs_6_1);
+
+        // c
+        c = new HashSet<>();
+        callsToStops = new HashMap<>();
+        stopsToCloses = new HashMap<>();
+        callsToCloses = new HashMap<>();
+        dates = new HashMap<>();
+        times = new HashMap<>();
     }
 
     public int process(Data_Environment de, Path pIn) {
@@ -178,9 +217,12 @@ public class Run2 {
             int i_8_35a = 0;
             int i_3_7 = 0;
             int i_6_1 = 0;
+            int i_2_1 = 0;
+            int i_2_5 = 0;
+            int i_2_6 = 0;
             int i = 0;
             for (var field : fields) {
-                System.out.println(field);
+                //System.out.println(field);
                 //System.out.println(field + " " + (fieldLookup.size() - 1));
                 if (field.contains(" ")) {
                     fieldLookup.put(field.split(" ")[0], field);
@@ -190,42 +232,52 @@ public class Run2 {
                 // a
                 if (field.startsWith(s_5_16)) {
                     i_5_16 = i;
-                    System.out.println(field + " " + i_5_16);
+                    //System.out.println(field + " " + i_5_16);
                 }
                 if (field.startsWith(s_5_16a)) {
                     i_5_16a = i;
-                    System.out.println(field + " " + i_5_16a);
+                    //System.out.println(field + " " + i_5_16a);
                 }
                 if (field.startsWith(s_8_24)) {
                     i_8_24 = i;
-                    System.out.println(field + " " + i_8_24);
+                    //System.out.println(field + " " + i_8_24);
                 }
                 if (field.startsWith(s_8_25)) {
                     i_8_25 = i;
-                    System.out.println(field + " " + i_8_25);
+                    //System.out.println(field + " " + i_8_25);
                 }
                 if (field.startsWith(s_8_35)) {
                     i_8_35 = i;
-                    System.out.println(field + " " + i_8_35);
+                    //System.out.println(field + " " + i_8_35);
                 }
                 if (field.startsWith(s_8_35a)) {
                     i_8_35a = i;
-                    System.out.println(field + " " + i_8_35a);
+                    //System.out.println(field + " " + i_8_35a);
                 }
                 // b
                 if (field.startsWith(s_3_7)) {
                     i_3_7 = i;
-                    System.out.println(field + " " + i_3_7);
+                    //System.out.println(field + " " + i_3_7);
                 }
                 if (field.startsWith(s_6_1)) {
                     i_6_1 = i;
-                    System.out.println(field + " " + i_6_1);
+                    //System.out.println(field + " " + i_6_1);
                 }
-                
+                // c
+                if (field.startsWith(s_2_1)) {
+                    i_2_1 = i;
+                }
+                if (field.startsWith(s_2_5)) {
+                    i_2_5 = i;
+                }
+                if (field.startsWith(s_2_6)) {
+                    i_2_6 = i;
+                }
                 i++;
             }
             line = r.readRow(hf);
             while (line != null) {
+                boolean selected = false;
                 ArrayList<String> row = r.parseLine(line);
                 // a
                 // 5.16
@@ -236,6 +288,8 @@ public class Run2 {
                     count_5_16++;
                     //records.put(rowid, row);
                     records.put(rowid, line);
+                    a.add(rowid);
+                    selected = true;
                 }
                 // 5.16a
                 String v_5_16a = row.get(i_5_16a);
@@ -246,6 +300,8 @@ public class Run2 {
                         count_5_16a++;
                         //records.put(rowid, row);
                         records.put(rowid, line);
+                        a.add(rowid);
+                        selected = true;
                     }
                 }
                 // 8.24
@@ -256,6 +312,8 @@ public class Run2 {
                     count_8_24++;
                     //records.put(rowid, row);
                     records.put(rowid, line);
+                    a.add(rowid);
+                    selected = true;
                 }
                 // 8.25
                 String v_8_25 = row.get(i_8_25);
@@ -265,6 +323,8 @@ public class Run2 {
                     count_8_25++;
                     //records.put(rowid, row);
                     records.put(rowid, line);
+                    a.add(rowid);
+                    selected = true;
                 }
                 // 8.35
                 String v_8_35 = row.get(i_8_35);
@@ -274,6 +334,8 @@ public class Run2 {
                     count_8_35++;
                     //records.put(rowid, row);
                     records.put(rowid, line);
+                    a.add(rowid);
+                    selected = true;
                 }
                 // 8.35a
                 String v_8_35a = row.get(i_8_35a);
@@ -284,6 +346,8 @@ public class Run2 {
                         count_8_35a++;
                         //records.put(rowid, row);
                         records.put(rowid, line);
+                        a.add(rowid);
+                        selected = true;
                     }
                 }
                 // b
@@ -292,19 +356,44 @@ public class Run2 {
                 vs_3_7.add(v_3_7);
                 if (!v_3_7.isBlank()) {
                     if (Integer.parseInt(v_3_7) > 0) {
-                        resourceCommitted ++;
+                        resourceCommitted++;
                     }
                 }
                 String v_6_1 = row.get(i_6_1);
                 vs_6_1.add(v_6_1);
                 if (!v_6_1.isBlank()) {
-                        resourceCommitted += Integer.parseInt(v_6_1);                    
+                    resourceCommitted += Integer.parseInt(v_6_1);
                     if (resourceCommitted >= 4) {
-                        count_resourceCommittedGreaterThan3 ++;
+                        count_resourceCommittedGreaterThan3++;
                         records.put(rowid, line);
+                        b.add(rowid);
+                        selected = true;
                     }
                 }
-                
+                // c
+                String v_2_1 = row.get(i_2_1);
+                if (!v_2_1.isBlank()) {
+                    String v_2_5 = row.get(i_2_5);
+                    String v_2_6 = row.get(i_2_6);
+                    ZonedDateTime start = getZonedDateTime(v_2_1);
+                    ZonedDateTime stop = getZonedDateTime(v_2_5);
+                    ZonedDateTime close = getZonedDateTime(v_2_6);
+                    long duration = ChronoUnit.MINUTES.between(start, stop);
+                    if (duration >= 360) {
+                        count_durationGreaterThan6Hours++;
+                        records.put(rowid, line);
+                        c.add(rowid);
+                        selected = true;
+                    }
+                    if (selected) {
+                        String[] dateTime = v_2_1.split(" ");
+                        callsToStops.put(rowid, duration);
+                        stopsToCloses.put(rowid, ChronoUnit.MINUTES.between(stop, close));
+                        callsToCloses.put(rowid, ChronoUnit.MINUTES.between(start, close));
+                        dates.put(rowid, dateTime[0]);
+                        times.put(rowid, dateTime[1]);
+                    }
+                }
                 line = r.readRow(hf);
                 rowid++;
             }
@@ -333,7 +422,9 @@ public class Run2 {
         System.out.println("" + count_8_35 + " records with \"" + fieldLookup.get(s_8_35.trim()) + "\" = " + area + "\"");
         System.out.println("" + count_8_35a + " records with \"" + fieldLookup.get(s_8_35a.trim()) + "\" > 100");
         System.out.println("" + count_resourceCommittedGreaterThan3 + " records with resources committed >= 4");
-        System.out.println("In total there are " + records.size() + " records:");
+        System.out.println("" + count_durationGreaterThan6Hours + " records with duration >= 6 hours");
+
+        System.out.println("In total there are " + records.size() + " records.");
 
         // Output records
         try {
@@ -343,15 +434,75 @@ public class Run2 {
             }
             try (BufferedWriter bw = Generic_IO.getBufferedWriter(pOut, false)) {
                 Files.createDirectories(pOut.getParent());
-                bw.write(header);
+                bw.write(header
+                        + ",Time from call to stop (in minutes)"
+                        + ",Time from stop to close (in minutes)"
+                        + ",Time from call to close (in minutes)"
+                        + ",date,time"
+                        + ",a,b,c,a+b+c");
                 bw.write("\n");
+
                 for (var id : records.keySet()) {
-                    System.out.println(records.get(id));
-                    bw.write(records.get(id) + "\n");
+                    //System.out.println(records.get(id));                    
+                    bw.write(records.get(id));
+                    // Times
+                    bw.write("," + Long.toString(callsToStops.get(id)));
+                    bw.write("," + Long.toString(stopsToCloses.get(id)));
+                    bw.write("," + Long.toString(callsToCloses.get(id)));
+                    bw.write(",\"" + dates.get(id) + "\"");
+                    bw.write(",\"" + times.get(id) + "\"");
+                    int abc = 0;
+                    // a, b, c
+                    if (a.contains(id)) {
+                        bw.write(",1");
+                        abc++;
+                    } else {
+                        bw.write(",0");
+                    }
+                    if (b.contains(id)) {
+                        bw.write(",1");
+                        abc++;
+                    } else {
+                        bw.write(",0");
+                    }
+                    if (c.contains(id)) {
+                        bw.write(",1");
+                        abc++;
+                    } else {
+                        bw.write(",0");
+                    }
+                    bw.write("," + Integer.toString(abc));
+                    bw.write("\n");
                 }
             }
         } catch (IOException ex) {
             Logger.getLogger(Run2.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    /**
+     * Compile Date as a ZonedDateTime.
+     *
+     * @param s The date as a String to be turned into a ZonedDateTime
+     * @return ZonedDateTime
+     */
+    public static ZonedDateTime getZonedDateTime(String s) {
+        //System.out.print(s);
+        String[] split = s.split(" ");
+        String[] DDMMYYYY = split[0].split("/");
+        int day = Integer.parseInt(DDMMYYYY[0]);
+        int month = Integer.parseInt(DDMMYYYY[1]);
+        int year = Integer.parseInt(DDMMYYYY[2]);
+        String[] timeSplit = split[1].split(":");
+        int hour = Integer.parseInt(timeSplit[0]);
+        int minute = Integer.parseInt(timeSplit[1]);
+        int second;
+        if (timeSplit.length == 3) {
+            second = Integer.parseInt(timeSplit[2]);
+        } else {
+            second = 0;
+        }
+        ZonedDateTime zdt = ZonedDateTime.of(year, month, day, hour, minute, second, 0, ZoneId.of("Europe/London"));
+        return zdt;
     }
 }
