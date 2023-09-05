@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -68,7 +69,7 @@ public class Run2 {
     // A class of area for which selections are made.
     String area = "\"Over 10,000";
     int areaHa = 1;
-    
+
     // 5_16
     HashSet<String> vs_5_16;
     int count_5_16 = 0;
@@ -123,6 +124,9 @@ public class Run2 {
     // ----------------------------
     HashSet<String> vs_3_2_Property_Type;
     TreeMap<String, Integer> counts_3_2_Property_Type;
+    TreeMap<Month, TreeMap<Integer, Integer>> countsOutDoorFireByYearAndMonth;
+    TreeMap<Integer, TreeMap<Integer, Integer>> countsOutDoorFireByYearAndWeek;
+    TreeMap<Integer, TreeMap<Integer, Integer>> countsOutDoorFireByYearAndDay;
     String s_3_2_Property_Type = "3.2 Property Type";
 
     /**
@@ -160,9 +164,9 @@ public class Run2 {
             initialise();
 
             // Part 1
-            part1(de, pIn, pIn2, pOutput);
+            //part1(de, pIn, pIn2, pOutput);
             // Part 2
-            //part2(de, pIn, pIn2, pOutput);
+            part2(de, pIn, pIn2, pOutput);
 
         } catch (Exception ex) {
             Logger.getLogger(Run2.class.getName()).log(Level.SEVERE, null, ex);
@@ -175,26 +179,135 @@ public class Run2 {
         processPart2(de, pIn);
         processPart2(de, pIn2);
 
+        //outputPart2(pOutput);
         System.out.println(s_3_2_Property_Type);
         System.out.println("Value, Count");
         for (var v : counts_3_2_Property_Type.keySet()) {
             System.out.println(v + ", " + counts_3_2_Property_Type.get(v));
         }
 
-        //outputPart2(pOutput);
+        // Monthly counts
+        System.out.println("Count of outdoor fires by month:");
+        String outputheader = "Month";
+        boolean first = true;
+        TreeMap<Integer, Integer> totalPerYear = new TreeMap<>();
+        String row;
+        for (Month month : countsOutDoorFireByYearAndMonth.keySet()) {
+            TreeMap<Integer, Integer> countsOutDoorFireByMonth = countsOutDoorFireByYearAndMonth.get(month);
+            row = month.name();
+            for (Integer year : countsOutDoorFireByMonth.keySet()) {
+                if (first) {
+                    outputheader += "," + year;
+                }
+                int count = countsOutDoorFireByMonth.get(year);
+                Generic_Collections.addToCount(totalPerYear, year, count);
+                row += "," + count;
+            }
+            if (first) {
+                System.out.println(outputheader);
+                first = false;
+            }
+            System.out.println(row);
+        }
+        row = "Any";
+        for (Integer year : totalPerYear.keySet()) {
+            row += "," + totalPerYear.get(year);
+        }
+        System.out.println(row);
+        
+        // Week of year
+        System.out.println("Count of outdoor fires by week of year:");
+        outputheader = "WeekOfYear";
+        first = true;
+        totalPerYear = new TreeMap<>();
+        for (Integer week : countsOutDoorFireByYearAndWeek.keySet()) {
+            TreeMap<Integer, Integer> countsOutDoorFireByWeek = countsOutDoorFireByYearAndWeek.get(week);
+            row = week.toString();
+            for (Integer year : countsOutDoorFireByWeek.keySet()) {
+                if (first) {
+                    outputheader += "," + year;
+                }
+                int count = countsOutDoorFireByWeek.get(year);
+                Generic_Collections.addToCount(totalPerYear, year, count);
+                row += "," + count;
+            }
+            if (first) {
+                System.out.println(outputheader);
+                first = false;
+            }
+            System.out.println(row);
+        }
+        row = "Any";
+        for (Integer year : totalPerYear.keySet()) {
+            row += "," + totalPerYear.get(year);
+        }
+        System.out.println(row);
+        
+        // Day of Year
+        System.out.println("Count of outdoor fires by day of year:");
+        outputheader = "DayOfYear";
+        first = true;
+        totalPerYear = new TreeMap<>();
+        for (Integer day : countsOutDoorFireByYearAndDay.keySet()) {
+            TreeMap<Integer, Integer> countsOutDoorFireByDay = countsOutDoorFireByYearAndDay.get(day);
+            row = day.toString();
+            for (Integer year : countsOutDoorFireByDay.keySet()) {
+                if (first) {
+                    outputheader += "," + year;
+                }
+                int count = countsOutDoorFireByDay.get(year);
+                Generic_Collections.addToCount(totalPerYear, year, count);
+                row += "," + count;
+            }
+            if (first) {
+                System.out.println(outputheader);
+                first = false;
+            }
+            System.out.println(row);
+        }
+        row = "Any";
+        for (Integer year : totalPerYear.keySet()) {
+            row += "," + totalPerYear.get(year);
+        }
+        System.out.println(row);
+        
     }
 
     /**
-     * Initialise sFields and field values
+     * Initialise Part 2 variables.
      */
     protected void initialisePart2() {
         // 3_2
         vs_3_2_Property_Type = new HashSet<>();
         counts_3_2_Property_Type = new TreeMap<>();
+        countsOutDoorFireByYearAndMonth = new TreeMap<>();
+        countsOutDoorFireByYearAndWeek = new TreeMap<>();
+        for (int week = 1; week <= 53; week ++) {
+            TreeMap<Integer, Integer> countsOutDoorFireByWeek = new TreeMap<>();
+            countsOutDoorFireByYearAndWeek.put(week, countsOutDoorFireByWeek);
+            for (int year = 2010; year < 2024; year ++) {
+                countsOutDoorFireByWeek.put(year, 0);
+            }
+        }
+        countsOutDoorFireByYearAndDay = new TreeMap<>();
+        for (int day = 1; day < 367; day ++) {
+            TreeMap<Integer, Integer> countsOutDoorFireByDay = new TreeMap<>();
+            countsOutDoorFireByYearAndDay.put(day, countsOutDoorFireByDay);
+            for (int year = 2010; year < 2024; year ++) {
+                countsOutDoorFireByDay.put(year, 0);
+            }
+        }
     }
 
+    /**
+     * Process Part 2.
+     *
+     * @param de The data environment.
+     * @param pIn The input file path.
+     */
     protected void processPart2(Data_Environment de, Path pIn) {
         try {
+            String outdoorType = "Property/Outdoor/Grassland, woodland and crops/";
             BufferedReader br = IO_Utilities.getBufferedReader(pIn);
             Data_ReadCSV r = new Data_ReadCSV(de);
             r.setStreamTokenizer(br, 9);
@@ -204,6 +317,7 @@ public class Run2 {
             System.out.println("Number of fields " + hf);
             ArrayList<String> fields = r.parseLine(header);
             // Initialise field indexes.
+            int i_2_1 = 0;
             int i_3_2 = 0;
             int i = 0;
             for (var field : fields) {
@@ -214,6 +328,9 @@ public class Run2 {
                 } else {
                     fieldLookup.put(field, field);
                 }
+                if (field.startsWith(s_2_1)) {
+                    i_2_1 = i;
+                }
                 // a
                 if (field.equals(s_3_2_Property_Type)) {
                     i_3_2 = i;
@@ -223,11 +340,47 @@ public class Run2 {
             line = r.readRow(hf);
             while (line != null) {
                 ArrayList<String> row = r.parseLine(line);
-                // 3.2
-                String v_3_2 = row.get(i_3_2);
-                v_3_2 = v_3_2.replaceAll("\"", "");
-                vs_3_2_Property_Type.add(v_3_2);
-                Generic_Collections.addToCount(counts_3_2_Property_Type, v_3_2, 1);
+                // 2.1
+                String v_2_1 = row.get(i_2_1);
+                if (!v_2_1.isBlank()) {
+                    ZonedDateTime start = getZonedDateTime(v_2_1);
+                    TreeMap<Integer, Integer> countsOutDoorFireByMonth;
+                    Integer year = start.getYear();
+                    Month month = start.getMonth();
+                    if (countsOutDoorFireByYearAndMonth.containsKey(month)) {
+                        countsOutDoorFireByMonth = countsOutDoorFireByYearAndMonth.get(month);
+                    } else {
+                        countsOutDoorFireByMonth = new TreeMap<>();
+                        countsOutDoorFireByYearAndMonth.put(month, countsOutDoorFireByMonth);
+                    }
+                    TreeMap<Integer, Integer> countsOutDoorFireByWeek;
+                    Integer day = start.getDayOfYear();
+                    Integer week = (day + 7) / 7;
+                    if (countsOutDoorFireByYearAndWeek.containsKey(week)) {
+                        countsOutDoorFireByWeek = countsOutDoorFireByYearAndWeek.get(week);
+                    } else {
+                        countsOutDoorFireByWeek = new TreeMap<>();
+                        countsOutDoorFireByYearAndWeek.put(week, countsOutDoorFireByWeek);
+                    }
+                    TreeMap<Integer, Integer> countsOutDoorFireByDay;
+                    if (countsOutDoorFireByYearAndDay.containsKey(day)) {
+                        countsOutDoorFireByDay = countsOutDoorFireByYearAndDay.get(day);
+                    } else {
+                        countsOutDoorFireByDay = new TreeMap<>();
+                        countsOutDoorFireByYearAndDay.put(day, countsOutDoorFireByDay);
+                    }
+                    
+                    // 3.2
+                    String v_3_2 = row.get(i_3_2);
+                    v_3_2 = v_3_2.replaceAll("\"", "");
+                    vs_3_2_Property_Type.add(v_3_2);
+                    Generic_Collections.addToCount(counts_3_2_Property_Type, v_3_2, 1);
+                    if (v_3_2.startsWith(outdoorType)) {
+                        Generic_Collections.addToCount(countsOutDoorFireByMonth, year, 1);
+                        Generic_Collections.addToCount(countsOutDoorFireByWeek, year, 1);
+                        Generic_Collections.addToCount(countsOutDoorFireByDay, year, 1);
+                    }
+                }
                 line = r.readRow(hf);
             }
         } catch (IOException ex) {
@@ -235,7 +388,14 @@ public class Run2 {
         }
     }
 
-    // Part 1
+    /**
+     * Part 1.
+     *
+     * @param de The data environment.
+     * @param pIn The first input file path.
+     * @param pIn2 The second input file path.
+     * @param pOutput The output file path.
+     */
     protected void part1(Data_Environment de, Path pIn, Path pIn2, Path pOutput) {
         Path pOut = Paths.get(pOutput.toString(), "abc.csv");
         initialisePart1();
@@ -313,6 +473,14 @@ public class Run2 {
         times = new HashMap<>();
     }
 
+    /**
+     * Process Part 2.
+     *
+     * @param de The data environment.
+     * @param pIn The input file path.
+     * @param id The row id for the first record read and processed.
+     * @return The row id for the next record to be processed.
+     */
     public int processPart1(Data_Environment de, Path pIn, int id) {
         try {
             BufferedReader br = IO_Utilities.getBufferedReader(pIn);
@@ -395,10 +563,10 @@ public class Run2 {
                 if (!line.replaceAll(",", "").trim().isBlank()) {
                     boolean selected = false;
                     ArrayList<String> row = r.parseLine(line);
-                    
-                    if ( Long.parseLong(row.get(0)) == 2047020822L) {
-                                int debug = 1;
-                            }
+
+//                    if (Long.parseLong(row.get(0)) == 2047020822L) {
+//                        int debug = 1;
+//                    }
                     // a
                     // 5.16
                     String v_5_16 = row.get(i_5_16);
@@ -524,6 +692,11 @@ public class Run2 {
         return id;
     }
 
+    /**
+     * For generating Part 1 outputs.
+     *
+     * @param pOut The path of the file to write to.
+     */
     public void outputPart1(Path pOut) {
         // Summary of fieldValues
         for (var field : fieldValues.keySet()) {
